@@ -1,3 +1,46 @@
+# danmu_api：Fork 使用说明
+
+**中文** | [English](README.en.md)
+
+本仓库是 [huangxd-/danmu_api](https://github.com/huangxd-/danmu_api) 的 Fork。下方保留上游完整中文说明、贡献者和部署入口；上游按钮/镜像不代表会使用本 Fork 的代码。本次只补文档，没有重新部署、调用真实视频源或验收播放器。
+
+## 本 Fork 的快速开始
+
+建议使用仍受支持的 Node.js LTS（仓库 Dockerfile 使用 Node 22）和 npm。原上游说明的 Node 18 是历史最低要求，不是对所有新依赖的兼容承诺。
+
+```sh
+git clone https://github.com/lauipaui/danmu_api.git
+cd danmu_api
+npm install
+cp config/.env.example config/.env
+# 在本地编辑 config/.env，设置随机 TOKEN 和独立的 ADMIN_TOKEN
+npm start
+```
+
+- 主 API 默认 `9321`，`DANMU_API_PORT` 可覆盖；Node 入口还会在 **`0.0.0.0:5321` 启动代理服务**，不要只限制主 API 端口。
+- 默认 `TOKEN=87654321` 是公开值，且默认值允许请求不带 Token。部署前设置不可猜测的自定义 Token，通过防火墙/反向代理限制来源并启用 HTTPS。
+- 系统环境变量优先于 `config/.env`。Node 入口监听该文件变化；修改监听端口仍需重启进程。Docker 要挂载整个 `config` 目录，平台环境变量则按平台要求重新部署。
+- URL 路径内的 Token 可能进入访问日志、浏览器历史和 Referer；不要分享完整 API 地址或日志。`ADMIN_TOKEN`、源站 Cookie、Redis Token 和部署平台 Token 均只在本地/平台秘密存储中配置。
+- 不要用 `NODE_TLS_REJECT_UNAUTHORIZED=0` 规避证书问题。
+
+配置字段见 [`config/.env.example`](config/.env.example)，管理 UI 见 [`danmu_api/ui/README.md`](danmu_api/ui/README.md)。本分支的 Forward 测试实际路径是 `forward/forward-widget.test.js`：
+
+```sh
+node --test danmu_api/worker.test.js
+node --test forward/forward-widget.test.js
+npm run build-forward-widget
+```
+
+这些命令是维护者检查入口，不表示本次已经执行全部网络/构建测试。按所选测试内容判断是否会访问外部平台。当前代码 `SEARCH_CACHE_MINUTES` 和 `COMMENT_CACHE_MINUTES` 均默认 1 分钟；下方保留的旧上游 prose 有弹幕 5 分钟及旧测试路径等差异，以当前代码和上面的修正为准。
+
+## 许可与使用边界
+
+根目录 [`LICENSE`](LICENSE) 为 **AGPL-3.0**，但当前 `package.json` 的 `license` 写为 `ISC`，存在元数据不一致。本次不擅自改许可证；再发行或提供网络服务前应核对原作者许可并遵守适用的源码提供义务。视频平台、弹幕数据与 API 有各自使用条款，本项目不授予数据版权或账户使用权限。
+
+---
+
+## 上游中文说明（保留）
+
 <div align="center">
   <img src="https://i.mji.rip/2025/09/27/eedc7b701c0fa5c1f7c175b22f441ad9.jpeg" alt="Clash" width="128" style="border-radius: 16px;" />
 </div>
@@ -270,18 +313,18 @@ LogVar 弹幕 API 服务器
 [![使用 EdgeOne Pages 部署](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://console.cloud.tencent.com/edgeone/pages/new?template=https://github.com/huangxd-/danmu_api&project-name=danmu-api&root-directory=.%2F&env=TOKEN)
 
 > 注意：部署时请在环境变量配置区域填写你的TOKEN值，该变量将用于API服务的身份验证相关功能
-> 
+>
 > 示例请求：`https://{your_domain}/{TOKEN}/api/v2/search/anime?keyword=子夜归`确认是否部署成功
 > > 注意：TOKEN为默认87654321的情况下，可不带{TOKEN}请求，如`https://{your_domain}.vercel.app/api/v2/search/anime?keyword=子夜归`
 >
 > 部署的时候项目加速区域最好设置为"全球可用区（不含中国大陆）"，不然不绑定自定义域名貌似只能生成3小时的预览链接？[相关文档](https://edgeone.cloud.tencent.com/pages/document/175191784523485184)
-> 
+>
 > 也可直接用国际站的部署按钮一键部署，默认选择"全球可用区（不含中国大陆）" [![使用 EdgeOne Pages 部署](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://edgeone.ai/pages/new?template=https://github.com/huangxd-/danmu_api&project-name=danmu-api&root-directory=.%2F&env=TOKEN)
-> 
+>
 <img src="https://i.mji.rip/2025/09/17/3a675876dabb92e4ce45c10d543ce66b.png" style="width:400px" />
 
 > 如果每次访问都遇到404等问题，可能是edgeone pages修改了访问策略，每次接口请求都转发到了新的环境，没有缓存，导致获取不到对应的弹幕，推荐用vercel/netlify部署。
-> 
+>
 > 解决方法：请配置环境变量`UPSTASH_REDIS_REST_URL`和`UPSTASH_REDIS_REST_TOKEN`，开启upstash redis存储
 
 ## 部署到 Cloudflare
@@ -354,11 +397,11 @@ API 支持返回 Bilibili 标准 XML 格式的弹幕数据，通过查询参数 
 > 注意：
 >
 > ~~小幻在填写API的时候需要在API后面加上/api/v2，如http://192.168.1.7:9321/87654321/api/v2~~
-> 
+>
 > （已对小幻做兼容，`/api/v2`可加可不加都可以正确处理）
-> 
+>
 > 小幻在使用时可能出现掉匹配无法加载弹幕的问题，详见[这个issue](https://github.com/huangxd-/danmu_api/issues/33)，可以通过配置环境变量`UPSTASH_REDIS_REST_URL`和`UPSTASH_REDIS_REST_TOKEN`，开启upstash redis存储解决
-> 
+>
 > 有很多人问FW能不能用，FW推荐直接使用插件，如果非要使用，则可以配合 `https://raw.githubusercontent.com/huangxd-/ForwardWidgets/refs/heads/main/widgets.fwd` 里的`danmu_api`插件使用
 
 ## 环境变量列表

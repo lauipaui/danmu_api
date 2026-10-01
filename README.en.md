@@ -23,11 +23,13 @@ git clone https://github.com/lauipaui/danmu_api.git
 cd danmu_api
 npm install
 cp config/.env.example config/.env
-# Edit config/.env locally before starting: set a random TOKEN and separate ADMIN_TOKEN
+# Edit config/.env locally before starting: set a random, private TOKEN (see the warning below)
 npm start
 ```
 
 The main HTTP listener binds to `0.0.0.0:9321`; `DANMU_API_PORT` overrides the port. **The Node entry also starts a proxy listener on `0.0.0.0:5321`.** Protect both ports rather than assuming only 9321 is exposed. Bind access through a firewall and authenticated HTTPS reverse proxy as appropriate.
+
+> **`ADMIN_TOKEN` is not a privilege boundary in the current code.** `danmu_api/worker.js` accepts `TOKEN` and `ADMIN_TOKEN` equally, and management routes such as `/api/env/set`, `/api/env/add`, `/api/env/del`, `/api/deploy`, `/api/cache/clear`, `/api/logs/clear` and `/api/cookie/save` do not check for the admin token; on Node, environment changes are written to `config/.env`. `ADMIN_TOKEN` currently only affects masking of client IPs and environment values in the UI/logs. **Anyone holding the ordinary `TOKEN` therefore has management access.** Do not share the API URL/token with untrusted clients; restrict who can reach the service with a firewall or an authenticated reverse proxy. This documentation update does not change that behavior.
 
 System environment variables take precedence over `config/.env`. The Node entry watches that file for changes, but listener-port changes require a process restart. Container-injected environment variables override file values as well.
 
@@ -90,7 +92,7 @@ See [`config/.env.example`](config/.env.example) and [`danmu_api/configs/envs.js
 
 | Variables | Purpose / checked defaults |
 | --- | --- |
-| `TOKEN`, `ADMIN_TOKEN` | API token (public default `87654321`) and separate management token (empty by default) |
+| `TOKEN`, `ADMIN_TOKEN` | API token (public default `87654321`) and an additional token (empty by default). **Either token is accepted for every route, including management APIs** — see the warning above |
 | `DANMU_API_PORT` | Node main listener, default 9321 |
 | `SOURCE_ORDER`, `PLATFORM_ORDER` | Enabled sources/order and preferred match platforms |
 | `MERGE_SOURCE_PAIRS` | Merge configured source groups |

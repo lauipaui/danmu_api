@@ -13,7 +13,7 @@ git clone https://github.com/lauipaui/danmu_api.git
 cd danmu_api
 npm install
 cp config/.env.example config/.env
-# 在本地编辑 config/.env，设置随机 TOKEN 和独立的 ADMIN_TOKEN
+# 在本地编辑 config/.env，设置随机且不公开的 TOKEN（见下方警告）
 npm start
 ```
 
@@ -21,6 +21,7 @@ npm start
 - 默认 `TOKEN=87654321` 是公开值，且默认值允许请求不带 Token。部署前设置不可猜测的自定义 Token，通过防火墙/反向代理限制来源并启用 HTTPS。
 - 系统环境变量优先于 `config/.env`。Node 入口监听该文件变化；修改监听端口仍需重启进程。Docker 要挂载整个 `config` 目录，平台环境变量则按平台要求重新部署。
 - URL 路径内的 Token 可能进入访问日志、浏览器历史和 Referer；不要分享完整 API 地址或日志。`ADMIN_TOKEN`、源站 Cookie、Redis Token 和部署平台 Token 均只在本地/平台秘密存储中配置。
+- **当前代码中 `ADMIN_TOKEN` 不是权限边界。** `danmu_api/worker.js` 对 `TOKEN` 与 `ADMIN_TOKEN` 同等放行，`/api/env/set`、`/api/env/add`、`/api/env/del`、`/api/deploy`、`/api/cache/clear`、`/api/logs/clear`、`/api/cookie/save` 等管理接口不校验是否为管理令牌；Node 部署会把环境变量改动写入 `config/.env`。`ADMIN_TOKEN` 目前只影响日志/界面中客户端 IP 和环境变量的脱敏显示。**持有普通 `TOKEN` 即拥有管理权限**，不要把 API 地址或 Token 分享给不受信任的客户端，并用防火墙或带认证的反向代理限制访问来源。本次只改文档，未修改该行为；下方上游表格中关于 ADMIN_TOKEN 的描述以此为准。
 - 不要用 `NODE_TLS_REJECT_UNAUTHORIZED=0` 规避证书问题。
 
 配置字段见 [`config/.env.example`](config/.env.example)，管理 UI 见 [`danmu_api/ui/README.md`](danmu_api/ui/README.md)。本分支的 Forward 测试实际路径是 `forward/forward-widget.test.js`：
